@@ -1,0 +1,756 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "R5EuZZBP0eNi"
+      },
+      "source": [
+        "# Stock Price Prediction using ANN\n",
+        "\n",
+        "## Introduction\n",
+        "This notebook demonstrates the prediction of stock prices using a simple Artificial Neural Network (ANN). We will use historical data to predict future stock prices, focusing on a univariate time series model for simplicity."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Pl8XY7sX0eNk"
+      },
+      "source": [
+        "## 1. Data Loading\n",
+        "Fetch historical stock data using `pandas_datareader`."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install yfinance==0.2.12"
+      ],
+      "metadata": {
+        "id": "dvjY9WZj0quP"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import yfinance as yf\n",
+        "\n",
+        "ticker = \"AAPL\"\n",
+        "\n",
+        "df = yf.download(\"AAPL\", period=\"10y\")\n",
+        "\n",
+        "df.head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 309
+        },
+        "id": "sNbUXi2X1fxy",
+        "outputId": "44462171-7441-45f9-872c-70be4a7ec476"
+      },
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\r[*********************100%***********************]  1 of 1 completed\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.10/dist-packages/yfinance/utils.py:681: FutureWarning: The 'unit' keyword in TimedeltaIndex construction is deprecated and will be removed in a future version. Use pd.to_timedelta instead.\n",
+            "  df.index += _pd.TimedeltaIndex(dst_error_hours, 'h')\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "                 Open       High        Low      Close  Adj Close     Volume\n",
+              "Date                                                                        \n",
+              "2014-11-24  29.212500  29.692499  29.155001  29.657499  26.418226  189803200\n",
+              "2014-11-25  29.767500  29.937500  29.362499  29.400000  26.188850  275361600\n",
+              "2014-11-26  29.485001  29.775000  29.457500  29.750000  26.500629  163073200\n",
+              "2014-11-28  29.817499  29.850000  29.512501  29.732500  26.485039   99257600\n",
+              "2014-12-01  29.702499  29.812500  27.817499  28.767500  25.625437  335256000"
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-63b6365a-eee4-446d-bddd-2a82d56a24d4\" class=\"colab-df-container\">\n",
+              "    <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>Open</th>\n",
+              "      <th>High</th>\n",
+              "      <th>Low</th>\n",
+              "      <th>Close</th>\n",
+              "      <th>Adj Close</th>\n",
+              "      <th>Volume</th>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>Date</th>\n",
+              "      <th></th>\n",
+              "      <th></th>\n",
+              "      <th></th>\n",
+              "      <th></th>\n",
+              "      <th></th>\n",
+              "      <th></th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>2014-11-24</th>\n",
+              "      <td>29.212500</td>\n",
+              "      <td>29.692499</td>\n",
+              "      <td>29.155001</td>\n",
+              "      <td>29.657499</td>\n",
+              "      <td>26.418226</td>\n",
+              "      <td>189803200</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2014-11-25</th>\n",
+              "      <td>29.767500</td>\n",
+              "      <td>29.937500</td>\n",
+              "      <td>29.362499</td>\n",
+              "      <td>29.400000</td>\n",
+              "      <td>26.188850</td>\n",
+              "      <td>275361600</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2014-11-26</th>\n",
+              "      <td>29.485001</td>\n",
+              "      <td>29.775000</td>\n",
+              "      <td>29.457500</td>\n",
+              "      <td>29.750000</td>\n",
+              "      <td>26.500629</td>\n",
+              "      <td>163073200</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2014-11-28</th>\n",
+              "      <td>29.817499</td>\n",
+              "      <td>29.850000</td>\n",
+              "      <td>29.512501</td>\n",
+              "      <td>29.732500</td>\n",
+              "      <td>26.485039</td>\n",
+              "      <td>99257600</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2014-12-01</th>\n",
+              "      <td>29.702499</td>\n",
+              "      <td>29.812500</td>\n",
+              "      <td>27.817499</td>\n",
+              "      <td>28.767500</td>\n",
+              "      <td>25.625437</td>\n",
+              "      <td>335256000</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "    <div class=\"colab-df-buttons\">\n",
+              "\n",
+              "  <div class=\"colab-df-container\">\n",
+              "    <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-63b6365a-eee4-446d-bddd-2a82d56a24d4')\"\n",
+              "            title=\"Convert this dataframe to an interactive table.\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\">\n",
+              "    <path d=\"M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z\"/>\n",
+              "  </svg>\n",
+              "    </button>\n",
+              "\n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-buttons div {\n",
+              "      margin-bottom: 4px;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "    <script>\n",
+              "      const buttonEl =\n",
+              "        document.querySelector('#df-63b6365a-eee4-446d-bddd-2a82d56a24d4 button.colab-df-convert');\n",
+              "      buttonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "      async function convertToInteractive(key) {\n",
+              "        const element = document.querySelector('#df-63b6365a-eee4-446d-bddd-2a82d56a24d4');\n",
+              "        const dataTable =\n",
+              "          await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                    [key], {});\n",
+              "        if (!dataTable) return;\n",
+              "\n",
+              "        const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "          '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "          + ' to learn more about interactive tables.';\n",
+              "        element.innerHTML = '';\n",
+              "        dataTable['output_type'] = 'display_data';\n",
+              "        await google.colab.output.renderOutput(dataTable, element);\n",
+              "        const docLink = document.createElement('div');\n",
+              "        docLink.innerHTML = docLinkHtml;\n",
+              "        element.appendChild(docLink);\n",
+              "      }\n",
+              "    </script>\n",
+              "  </div>\n",
+              "\n",
+              "\n",
+              "<div id=\"df-ad55b03f-52d9-4cdc-bb73-805dfd1ec06c\">\n",
+              "  <button class=\"colab-df-quickchart\" onclick=\"quickchart('df-ad55b03f-52d9-4cdc-bb73-805dfd1ec06c')\"\n",
+              "            title=\"Suggest charts\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "     width=\"24px\">\n",
+              "    <g>\n",
+              "        <path d=\"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z\"/>\n",
+              "    </g>\n",
+              "</svg>\n",
+              "  </button>\n",
+              "\n",
+              "<style>\n",
+              "  .colab-df-quickchart {\n",
+              "      --bg-color: #E8F0FE;\n",
+              "      --fill-color: #1967D2;\n",
+              "      --hover-bg-color: #E2EBFA;\n",
+              "      --hover-fill-color: #174EA6;\n",
+              "      --disabled-fill-color: #AAA;\n",
+              "      --disabled-bg-color: #DDD;\n",
+              "  }\n",
+              "\n",
+              "  [theme=dark] .colab-df-quickchart {\n",
+              "      --bg-color: #3B4455;\n",
+              "      --fill-color: #D2E3FC;\n",
+              "      --hover-bg-color: #434B5C;\n",
+              "      --hover-fill-color: #FFFFFF;\n",
+              "      --disabled-bg-color: #3B4455;\n",
+              "      --disabled-fill-color: #666;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart {\n",
+              "    background-color: var(--bg-color);\n",
+              "    border: none;\n",
+              "    border-radius: 50%;\n",
+              "    cursor: pointer;\n",
+              "    display: none;\n",
+              "    fill: var(--fill-color);\n",
+              "    height: 32px;\n",
+              "    padding: 0;\n",
+              "    width: 32px;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart:hover {\n",
+              "    background-color: var(--hover-bg-color);\n",
+              "    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "    fill: var(--button-hover-fill-color);\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart-complete:disabled,\n",
+              "  .colab-df-quickchart-complete:disabled:hover {\n",
+              "    background-color: var(--disabled-bg-color);\n",
+              "    fill: var(--disabled-fill-color);\n",
+              "    box-shadow: none;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-spinner {\n",
+              "    border: 2px solid var(--fill-color);\n",
+              "    border-color: transparent;\n",
+              "    border-bottom-color: var(--fill-color);\n",
+              "    animation:\n",
+              "      spin 1s steps(1) infinite;\n",
+              "  }\n",
+              "\n",
+              "  @keyframes spin {\n",
+              "    0% {\n",
+              "      border-color: transparent;\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "      border-left-color: var(--fill-color);\n",
+              "    }\n",
+              "    20% {\n",
+              "      border-color: transparent;\n",
+              "      border-left-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "    }\n",
+              "    30% {\n",
+              "      border-color: transparent;\n",
+              "      border-left-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "      border-right-color: var(--fill-color);\n",
+              "    }\n",
+              "    40% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "    }\n",
+              "    60% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "    }\n",
+              "    80% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "    }\n",
+              "    90% {\n",
+              "      border-color: transparent;\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "    }\n",
+              "  }\n",
+              "</style>\n",
+              "\n",
+              "  <script>\n",
+              "    async function quickchart(key) {\n",
+              "      const quickchartButtonEl =\n",
+              "        document.querySelector('#' + key + ' button');\n",
+              "      quickchartButtonEl.disabled = true;  // To prevent multiple clicks.\n",
+              "      quickchartButtonEl.classList.add('colab-df-spinner');\n",
+              "      try {\n",
+              "        const charts = await google.colab.kernel.invokeFunction(\n",
+              "            'suggestCharts', [key], {});\n",
+              "      } catch (error) {\n",
+              "        console.error('Error during call to suggestCharts:', error);\n",
+              "      }\n",
+              "      quickchartButtonEl.classList.remove('colab-df-spinner');\n",
+              "      quickchartButtonEl.classList.add('colab-df-quickchart-complete');\n",
+              "    }\n",
+              "    (() => {\n",
+              "      let quickchartButtonEl =\n",
+              "        document.querySelector('#df-ad55b03f-52d9-4cdc-bb73-805dfd1ec06c button');\n",
+              "      quickchartButtonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "    })();\n",
+              "  </script>\n",
+              "</div>\n",
+              "\n",
+              "    </div>\n",
+              "  </div>\n"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "dataframe",
+              "variable_name": "df",
+              "summary": "{\n  \"name\": \"df\",\n  \"rows\": 2517,\n  \"fields\": [\n    {\n      \"column\": \"Date\",\n      \"properties\": {\n        \"dtype\": \"date\",\n        \"min\": \"2014-11-24 00:00:00\",\n        \"max\": \"2024-11-22 00:00:00\",\n        \"num_unique_values\": 2517,\n        \"samples\": [\n          \"2023-08-16 00:00:00\",\n          \"2016-07-13 00:00:00\",\n          \"2020-06-03 00:00:00\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Open\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 63.763141614536785,\n        \"min\": 22.5,\n        \"max\": 236.47999572753906,\n        \"num_unique_values\": 2376,\n        \"samples\": [\n          191.89999389648438,\n          132.0800018310547,\n          32.540000915527344\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"High\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 64.42694496062781,\n        \"min\": 22.917499542236328,\n        \"max\": 237.49000549316406,\n        \"num_unique_values\": 2374,\n        \"samples\": [\n          197.1999969482422,\n          138.3699951171875,\n          32.60499954223633\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Low\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 63.14599390107768,\n        \"min\": 22.36750030517578,\n        \"max\": 234.4499969482422,\n        \"num_unique_values\": 2395,\n        \"samples\": [\n          28.93000030517578,\n          28.325000762939453,\n          121.26000213623047\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Close\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 63.823546392356015,\n        \"min\": 22.584999084472656,\n        \"max\": 236.47999572753906,\n        \"num_unique_values\": 2376,\n        \"samples\": [\n          195.10000610351562,\n          137.44000244140625,\n          33.162498474121094\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Adj Close\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 64.27742896833878,\n        \"min\": 20.697263717651367,\n        \"max\": 236.22010803222656,\n        \"num_unique_values\": 2480,\n        \"samples\": [\n          41.16892623901367,\n          25.475448608398438,\n          45.19643020629883\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Volume\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 68773312,\n        \"min\": 24048300,\n        \"max\": 648825200,\n        \"num_unique_values\": 2510,\n        \"samples\": [\n          198054800,\n          58046200,\n          45519300\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    }\n  ]\n}"
+            }
+          },
+          "metadata": {},
+          "execution_count": 12
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xaOXdATr0eNl"
+      },
+      "source": [
+        "## 2. Data Preprocessing"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "gtEGyvpK0eNm"
+      },
+      "source": [
+        "### Feature Scaling and Time Series Window"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 14,
+      "metadata": {
+        "id": "s-Lsl_3i0eNm"
+      },
+      "outputs": [],
+      "source": [
+        "import numpy as np\n",
+        "from sklearn.preprocessing import MinMaxScaler\n",
+        "\n",
+        "# Normalize the close prices\n",
+        "scaler = MinMaxScaler(feature_range=(0, 1))\n",
+        "scaled_data = scaler.fit_transform(df['Close'].values.reshape(-1,1))\n",
+        "\n",
+        "# Create a time series window\n",
+        "window_size = 60  # days\n",
+        "X, y = [], []\n",
+        "for i in range(window_size, len(scaled_data)):\n",
+        "    X.append(scaled_data[i-window_size:i, 0])\n",
+        "    y.append(scaled_data[i, 0])\n",
+        "X, y = np.array(X), np.array(y)\n",
+        "X = np.reshape(X, (X.shape[0], X.shape[1], 1))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "tvDYiO0K0eNm"
+      },
+      "source": [
+        "## 3. Building an ANN Model"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 15,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "BjvH4hVY0eNm",
+        "outputId": "c7f15065-c96b-4165-b2d4-7340ed1b42c9"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.10/dist-packages/keras/src/layers/reshaping/flatten.py:37: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.\n",
+            "  super().__init__(**kwargs)\n"
+          ]
+        }
+      ],
+      "source": [
+        "from tensorflow.keras.models import Sequential\n",
+        "from tensorflow.keras.layers import Dense, Flatten\n",
+        "\n",
+        "model = Sequential([\n",
+        "    Flatten(input_shape=(window_size, 1)),\n",
+        "    Dense(64, activation='relu'),\n",
+        "    Dense(1)\n",
+        "])\n",
+        "\n",
+        "model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "wK16Bozd0eNm"
+      },
+      "source": [
+        "## 4. Model Training"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 16,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "83jXXAAL0eNn",
+        "outputId": "51f117dd-8363-4f98-da33-ef4199345e24"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 4ms/step - loss: 0.0610 - mae: 0.1367 - val_loss: 0.0097 - val_mae: 0.0754\n",
+            "Epoch 2/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 0.0025 - mae: 0.0353 - val_loss: 0.0051 - val_mae: 0.0594\n",
+            "Epoch 3/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 0.0018 - mae: 0.0282 - val_loss: 0.0046 - val_mae: 0.0524\n",
+            "Epoch 4/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 0.0015 - mae: 0.0262 - val_loss: 0.0032 - val_mae: 0.0450\n",
+            "Epoch 5/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 0.0013 - mae: 0.0242 - val_loss: 0.0025 - val_mae: 0.0420\n",
+            "Epoch 6/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 0.0011 - mae: 0.0223 - val_loss: 0.0021 - val_mae: 0.0379\n",
+            "Epoch 7/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 9.4058e-04 - mae: 0.0210 - val_loss: 0.0035 - val_mae: 0.0481\n",
+            "Epoch 8/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 9.0131e-04 - mae: 0.0202 - val_loss: 0.0026 - val_mae: 0.0404\n",
+            "Epoch 9/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 7.6082e-04 - mae: 0.0182 - val_loss: 0.0019 - val_mae: 0.0350\n",
+            "Epoch 10/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 6.8732e-04 - mae: 0.0176 - val_loss: 0.0016 - val_mae: 0.0319\n",
+            "Epoch 11/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 6.8631e-04 - mae: 0.0172 - val_loss: 0.0014 - val_mae: 0.0304\n",
+            "Epoch 12/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 6.5102e-04 - mae: 0.0169 - val_loss: 0.0013 - val_mae: 0.0295\n",
+            "Epoch 13/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 5.9617e-04 - mae: 0.0161 - val_loss: 0.0015 - val_mae: 0.0302\n",
+            "Epoch 14/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 5.6223e-04 - mae: 0.0157 - val_loss: 0.0012 - val_mae: 0.0279\n",
+            "Epoch 15/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 5.6665e-04 - mae: 0.0155 - val_loss: 0.0012 - val_mae: 0.0271\n",
+            "Epoch 16/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 5.2172e-04 - mae: 0.0150 - val_loss: 0.0033 - val_mae: 0.0489\n",
+            "Epoch 17/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 5.4882e-04 - mae: 0.0152 - val_loss: 0.0026 - val_mae: 0.0421\n",
+            "Epoch 18/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 4.8368e-04 - mae: 0.0143 - val_loss: 0.0018 - val_mae: 0.0341\n",
+            "Epoch 19/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 4.4743e-04 - mae: 0.0140 - val_loss: 0.0012 - val_mae: 0.0271\n",
+            "Epoch 20/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 4.1996e-04 - mae: 0.0135 - val_loss: 0.0011 - val_mae: 0.0258\n",
+            "Epoch 21/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 4.0462e-04 - mae: 0.0131 - val_loss: 0.0036 - val_mae: 0.0526\n",
+            "Epoch 22/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 4.8761e-04 - mae: 0.0141 - val_loss: 0.0012 - val_mae: 0.0274\n",
+            "Epoch 23/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 4.3841e-04 - mae: 0.0135 - val_loss: 8.8927e-04 - val_mae: 0.0237\n",
+            "Epoch 24/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 3.4636e-04 - mae: 0.0122 - val_loss: 0.0020 - val_mae: 0.0382\n",
+            "Epoch 25/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 4.6536e-04 - mae: 0.0136 - val_loss: 0.0015 - val_mae: 0.0307\n",
+            "Epoch 26/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 3.6898e-04 - mae: 0.0124 - val_loss: 0.0075 - val_mae: 0.0813\n",
+            "Epoch 27/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 8.4299e-04 - mae: 0.0186 - val_loss: 0.0030 - val_mae: 0.0471\n",
+            "Epoch 28/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 4.1438e-04 - mae: 0.0132 - val_loss: 0.0015 - val_mae: 0.0316\n",
+            "Epoch 29/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 5ms/step - loss: 3.3820e-04 - mae: 0.0119 - val_loss: 8.3761e-04 - val_mae: 0.0232\n",
+            "Epoch 30/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 4.1934e-04 - mae: 0.0131 - val_loss: 7.0699e-04 - val_mae: 0.0207\n",
+            "Epoch 31/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.7713e-04 - mae: 0.0108 - val_loss: 7.0165e-04 - val_mae: 0.0208\n",
+            "Epoch 32/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.7438e-04 - mae: 0.0107 - val_loss: 0.0012 - val_mae: 0.0284\n",
+            "Epoch 33/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 3.6206e-04 - mae: 0.0123 - val_loss: 7.6822e-04 - val_mae: 0.0220\n",
+            "Epoch 34/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 5ms/step - loss: 3.6144e-04 - mae: 0.0121 - val_loss: 0.0011 - val_mae: 0.0269\n",
+            "Epoch 35/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 5ms/step - loss: 3.3372e-04 - mae: 0.0117 - val_loss: 6.2132e-04 - val_mae: 0.0194\n",
+            "Epoch 36/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 5ms/step - loss: 2.7797e-04 - mae: 0.0105 - val_loss: 9.1766e-04 - val_mae: 0.0246\n",
+            "Epoch 37/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 2.5287e-04 - mae: 0.0102 - val_loss: 7.1361e-04 - val_mae: 0.0210\n",
+            "Epoch 38/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 4ms/step - loss: 2.8313e-04 - mae: 0.0107 - val_loss: 0.0014 - val_mae: 0.0316\n",
+            "Epoch 39/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.5498e-04 - mae: 0.0103 - val_loss: 8.6308e-04 - val_mae: 0.0235\n",
+            "Epoch 40/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.7549e-04 - mae: 0.0105 - val_loss: 0.0017 - val_mae: 0.0356\n",
+            "Epoch 41/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 4.9612e-04 - mae: 0.0146 - val_loss: 0.0017 - val_mae: 0.0363\n",
+            "Epoch 42/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 4.8028e-04 - mae: 0.0140 - val_loss: 8.0461e-04 - val_mae: 0.0224\n",
+            "Epoch 43/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.3875e-04 - mae: 0.0098 - val_loss: 9.2096e-04 - val_mae: 0.0244\n",
+            "Epoch 44/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.2243e-04 - mae: 0.0093 - val_loss: 5.3661e-04 - val_mae: 0.0181\n",
+            "Epoch 45/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 1.8940e-04 - mae: 0.0088 - val_loss: 0.0013 - val_mae: 0.0296\n",
+            "Epoch 46/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.0672e-04 - mae: 0.0092 - val_loss: 6.4383e-04 - val_mae: 0.0202\n",
+            "Epoch 47/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.8035e-04 - mae: 0.0106 - val_loss: 0.0064 - val_mae: 0.0768\n",
+            "Epoch 48/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 3ms/step - loss: 6.1044e-04 - mae: 0.0163 - val_loss: 5.0477e-04 - val_mae: 0.0176\n",
+            "Epoch 49/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 1.7477e-04 - mae: 0.0087 - val_loss: 4.9034e-04 - val_mae: 0.0174\n",
+            "Epoch 50/50\n",
+            "\u001b[1m70/70\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 2.6264e-04 - mae: 0.0102 - val_loss: 7.2474e-04 - val_mae: 0.0213\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<keras.src.callbacks.history.History at 0x7a48122f4220>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 16
+        }
+      ],
+      "source": [
+        "model.fit(X, y, epochs=50, batch_size=32, validation_split=0.1)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zJtAOlRY0eNn"
+      },
+      "source": [
+        "## 5. Model Evaluation"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 17,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "OiQ5soOz0eNn",
+        "outputId": "d4338b7c-329c-4eec-f03f-e4fcc4ca2cdf"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[1m1/1\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 47ms/step\n",
+            "Predicted next day price: 23.882883071899414\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Predicting future stock prices\n",
+        "# Fetch the latest 60 days and predict the next day\n",
+        "last_60_days = scaled_data[-60:]\n",
+        "last_60_days_scaled = scaler.transform(last_60_days)\n",
+        "next_day_price = model.predict(last_60_days_scaled.reshape(1, 60, 1))\n",
+        "next_day_price = scaler.inverse_transform(next_day_price)  # reverse scaling\n",
+        "\n",
+        "print(f'Predicted next day price: {next_day_price[0][0]}')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "import yfinance as yf\n",
+        "import pandas_datareader.data as web\n",
+        "\n",
+        "stocks = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']\n",
+        "\n",
+        "stock_data = yf.download(stocks, period=\"10y\")\n",
+        "\n",
+        "len(stock_data)"
+      ],
+      "metadata": {
+        "id": "VQ0A-3AZ552x"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "import yfinance as yf\n",
+        "import pandas_datareader.data as web\n",
+        "\n",
+        "stocks = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'FB', 'TSLA', 'BRK-B', 'V', 'JPM', 'JNJ', 'WMT', 'PG', 'UNH', 'MA', 'INTC', 'VZ', 'HD', 'T', 'DIS', 'BAC', 'KO', 'MRK', 'PFE', 'CMCSA', 'PEP', 'CSCO', 'ORCL', 'ABT', 'XOM', 'BA', 'NFLX', 'COST', 'CVX', 'LLY', 'MCD', 'DHR', 'ACN', 'MDT', 'NEE', 'BMY', 'AMGN', 'LIN', 'UNP', 'TXN', 'HON', 'ADBE', 'AVGO', 'PYPL', 'PM', 'IBM']\n",
+        "\n",
+        "stock_data = yf.download(stocks, period=\"10y\")\n",
+        "\n",
+        "len(stock_data)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "8fDxxHcn6KmV",
+        "outputId": "c40ca5ed-6424-4905-bf42-29ac0f5f92f9"
+      },
+      "execution_count": 1,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "[*********************100%***********************]  50 of 50 completed\n",
+            "ERROR:yfinance:\n",
+            "1 Failed download:\n",
+            "ERROR:yfinance:['FB']: YFPricesMissingError('$%ticker%: possibly delisted; no price data found  (period=10y) (Yahoo error = \"No data found, symbol may be delisted\")')\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "2517"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 1
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Z3zAKJob0eNn"
+      },
+      "source": [
+        "## 6. Conclusion\n",
+        "Discuss the results and potential improvements."
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.8.5"
+    },
+    "colab": {
+      "provenance": []
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
