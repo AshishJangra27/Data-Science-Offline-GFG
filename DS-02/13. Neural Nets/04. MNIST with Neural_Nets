@@ -1,0 +1,380 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "JgCNtJQC6a0k"
+      },
+      "source": [
+        "# MNIST Digit Classification using TensorFlow\n",
+        "\n",
+        "## Introduction\n",
+        "This notebook will demonstrate an end-to-end machine learning project with TensorFlow and Keras using the MNIST dataset, a collection of handwritten digits. We will explore different neural network architectures and compare their performance in digit classification."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "WD8BlC8s6a0m"
+      },
+      "source": [
+        "## 1. Data Loading\n",
+        "The MNIST dataset is conveniently included in TensorFlow's dataset library."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "pWbHbChb6a0m",
+        "outputId": "c2f0356c-2837-450b-9287-d371aef2169e"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz\n",
+            "\u001b[1m11490434/11490434\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 0us/step\n"
+          ]
+        }
+      ],
+      "source": [
+        "import tensorflow as tf\n",
+        "from tensorflow.keras.datasets import mnist\n",
+        "\n",
+        "(X_train, y_train), (X_test, y_test) = mnist.load_data()\n",
+        "X_train = X_train.reshape(-1, 28, 28, 1).astype('float32') / 255\n",
+        "X_test = X_test.reshape(-1, 28, 28, 1).astype('float32') / 255"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "CCvnrbZU6a0m"
+      },
+      "source": [
+        "## 2. Data Preprocessing\n",
+        "The images are normalized to have values between 0 and 1. Labels are one-hot encoded."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "id": "9RSQf5TV6a0m"
+      },
+      "outputs": [],
+      "source": [
+        "y_train = tf.keras.utils.to_categorical(y_train, 10)\n",
+        "y_test = tf.keras.utils.to_categorical(y_test, 10)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Ustpiwmi6a0n"
+      },
+      "source": [
+        "## 3. Building Neural Network Models\n",
+        "We will construct three different models: a basic ANN, a LeNet-5 inspired CNN, and a more complex CNN."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YslTfW686a0n"
+      },
+      "source": [
+        "### 3.1 Basic ANN Model"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 3,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "tzu-0dSd6a0n",
+        "outputId": "f9ea81eb-1fb8-42ac-9a55-ac79db0dbe97"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.10/dist-packages/keras/src/layers/reshaping/flatten.py:37: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.\n",
+            "  super().__init__(**kwargs)\n"
+          ]
+        }
+      ],
+      "source": [
+        "model_ann = tf.keras.models.Sequential([\n",
+        "    tf.keras.layers.Flatten(input_shape=(28, 28, 1)),\n",
+        "    tf.keras.layers.Dense(128, activation='relu'),\n",
+        "    tf.keras.layers.Dense(10, activation='softmax')\n",
+        "])\n",
+        "model_ann.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "DdlOOk3w6a0n"
+      },
+      "source": [
+        "### 3.2 LeNet-5 Inspired CNN Model"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "om9MScIT6a0n",
+        "outputId": "f631cb11-e347-40bc-ebd9-a1153a181a82"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.10/dist-packages/keras/src/layers/convolutional/base_conv.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.\n",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)\n"
+          ]
+        }
+      ],
+      "source": [
+        "model_lenet = tf.keras.models.Sequential([\n",
+        "    tf.keras.layers.Conv2D(6, kernel_size=(5, 5), activation='relu', input_shape=(28, 28, 1)),\n",
+        "    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),\n",
+        "    tf.keras.layers.Conv2D(16, kernel_size=(5, 5), activation='relu'),\n",
+        "    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),\n",
+        "    tf.keras.layers.Flatten(),\n",
+        "    tf.keras.layers.Dense(120, activation='relu'),\n",
+        "    tf.keras.layers.Dense(84, activation='relu'),\n",
+        "    tf.keras.layers.Dense(10, activation='softmax')\n",
+        "])\n",
+        "model_lenet.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "hZvJym406a0n"
+      },
+      "source": [
+        "### 3.3 A More Complex CNN Model"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 5,
+      "metadata": {
+        "id": "RGKROUQJ6a0n"
+      },
+      "outputs": [],
+      "source": [
+        "model_complex = tf.keras.models.Sequential([\n",
+        "    tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.MaxPooling2D((2, 2)),\n",
+        "    tf.keras.layers.Dropout(0.3),\n",
+        "    tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),\n",
+        "    tf.keras.layers.Dropout(0.3),\n",
+        "    tf.keras.layers.Flatten(),\n",
+        "    tf.keras.layers.Dense(128, activation='relu'),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.Dropout(0.3),\n",
+        "    tf.keras.layers.Dense(10, activation='softmax')\n",
+        "])\n",
+        "model_complex.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "BU5DsM7c6a0n"
+      },
+      "source": [
+        "## 4. Training the Models\n",
+        "Train each model and capture their training histories."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 6,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "id": "rlpGU0MR6a0n",
+        "outputId": "e255bf57-7f5a-47c4-be82-0693ec4eca1d"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m9s\u001b[0m 5ms/step - accuracy: 0.8712 - loss: 0.4524 - val_accuracy: 0.9668 - val_loss: 0.1164\n",
+            "Epoch 2/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 5ms/step - accuracy: 0.9627 - loss: 0.1268 - val_accuracy: 0.9718 - val_loss: 0.0968\n",
+            "Epoch 3/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m7s\u001b[0m 4ms/step - accuracy: 0.9761 - loss: 0.0791 - val_accuracy: 0.9752 - val_loss: 0.0831\n",
+            "Epoch 4/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 4ms/step - accuracy: 0.9840 - loss: 0.0561 - val_accuracy: 0.9780 - val_loss: 0.0763\n",
+            "Epoch 5/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m6s\u001b[0m 4ms/step - accuracy: 0.9869 - loss: 0.0433 - val_accuracy: 0.9785 - val_loss: 0.0779\n",
+            "Epoch 6/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 3ms/step - accuracy: 0.9894 - loss: 0.0359 - val_accuracy: 0.9795 - val_loss: 0.0735\n",
+            "Epoch 7/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 4ms/step - accuracy: 0.9920 - loss: 0.0276 - val_accuracy: 0.9790 - val_loss: 0.0789\n",
+            "Epoch 8/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m8s\u001b[0m 5ms/step - accuracy: 0.9943 - loss: 0.0197 - val_accuracy: 0.9787 - val_loss: 0.0757\n",
+            "Epoch 9/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m6s\u001b[0m 4ms/step - accuracy: 0.9947 - loss: 0.0181 - val_accuracy: 0.9797 - val_loss: 0.0721\n",
+            "Epoch 10/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 4ms/step - accuracy: 0.9965 - loss: 0.0133 - val_accuracy: 0.9787 - val_loss: 0.0866\n",
+            "Epoch 1/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m32s\u001b[0m 18ms/step - accuracy: 0.8714 - loss: 0.4240 - val_accuracy: 0.9760 - val_loss: 0.0815\n",
+            "Epoch 2/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m29s\u001b[0m 17ms/step - accuracy: 0.9750 - loss: 0.0787 - val_accuracy: 0.9822 - val_loss: 0.0583\n",
+            "Epoch 3/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m42s\u001b[0m 18ms/step - accuracy: 0.9825 - loss: 0.0539 - val_accuracy: 0.9822 - val_loss: 0.0669\n",
+            "Epoch 4/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m39s\u001b[0m 17ms/step - accuracy: 0.9857 - loss: 0.0444 - val_accuracy: 0.9833 - val_loss: 0.0508\n",
+            "Epoch 5/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m29s\u001b[0m 17ms/step - accuracy: 0.9895 - loss: 0.0327 - val_accuracy: 0.9868 - val_loss: 0.0370\n",
+            "Epoch 6/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m29s\u001b[0m 17ms/step - accuracy: 0.9920 - loss: 0.0254 - val_accuracy: 0.9865 - val_loss: 0.0414\n",
+            "Epoch 7/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m29s\u001b[0m 17ms/step - accuracy: 0.9926 - loss: 0.0238 - val_accuracy: 0.9885 - val_loss: 0.0400\n",
+            "Epoch 8/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m42s\u001b[0m 18ms/step - accuracy: 0.9932 - loss: 0.0209 - val_accuracy: 0.9875 - val_loss: 0.0337\n",
+            "Epoch 9/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m40s\u001b[0m 17ms/step - accuracy: 0.9939 - loss: 0.0170 - val_accuracy: 0.9897 - val_loss: 0.0376\n",
+            "Epoch 10/10\n",
+            "\u001b[1m1688/1688\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m43s\u001b[0m 18ms/step - accuracy: 0.9947 - loss: 0.0166 - val_accuracy: 0.9872 - val_loss: 0.0459\n",
+            "Epoch 1/10\n",
+            "\u001b[1m 279/1688\u001b[0m \u001b[32m━━━\u001b[0m\u001b[37m━━━━━━━━━━━━━━━━━\u001b[0m \u001b[1m3:48\u001b[0m 162ms/step - accuracy: 0.8310 - loss: 0.5653"
+          ]
+        },
+        {
+          "output_type": "error",
+          "ename": "KeyboardInterrupt",
+          "evalue": "",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mKeyboardInterrupt\u001b[0m                         Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-6-e31afa5d5865>\u001b[0m in \u001b[0;36m<cell line: 3>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0mhistory_ann\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mmodel_ann\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfit\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mX_train\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0my_train\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mepochs\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m10\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalidation_split\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m0.1\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      2\u001b[0m \u001b[0mhistory_lenet\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mmodel_lenet\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfit\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mX_train\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0my_train\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mepochs\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m10\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalidation_split\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m0.1\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 3\u001b[0;31m \u001b[0mhistory_complex\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mmodel_complex\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfit\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mX_train\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0my_train\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mepochs\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m10\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalidation_split\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m0.1\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/keras/src/utils/traceback_utils.py\u001b[0m in \u001b[0;36merror_handler\u001b[0;34m(*args, **kwargs)\u001b[0m\n\u001b[1;32m    115\u001b[0m         \u001b[0mfiltered_tb\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;32mNone\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    116\u001b[0m         \u001b[0;32mtry\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 117\u001b[0;31m             \u001b[0;32mreturn\u001b[0m \u001b[0mfn\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    118\u001b[0m         \u001b[0;32mexcept\u001b[0m \u001b[0mException\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    119\u001b[0m             \u001b[0mfiltered_tb\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0m_process_traceback_frames\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0me\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m__traceback__\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/keras/src/backend/tensorflow/trainer.py\u001b[0m in \u001b[0;36mfit\u001b[0;34m(self, x, y, batch_size, epochs, verbose, callbacks, validation_split, validation_data, shuffle, class_weight, sample_weight, initial_epoch, steps_per_epoch, validation_steps, validation_batch_size, validation_freq)\u001b[0m\n\u001b[1;32m    318\u001b[0m                 \u001b[0;32mfor\u001b[0m \u001b[0mstep\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0miterator\u001b[0m \u001b[0;32min\u001b[0m \u001b[0mepoch_iterator\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0menumerate_epoch\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    319\u001b[0m                     \u001b[0mcallbacks\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mon_train_batch_begin\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mstep\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 320\u001b[0;31m                     \u001b[0mlogs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mtrain_function\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0miterator\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    321\u001b[0m                     \u001b[0mlogs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_pythonify_logs\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mlogs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    322\u001b[0m                     \u001b[0mcallbacks\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mon_train_batch_end\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mstep\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mlogs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/util/traceback_utils.py\u001b[0m in \u001b[0;36merror_handler\u001b[0;34m(*args, **kwargs)\u001b[0m\n\u001b[1;32m    148\u001b[0m     \u001b[0mfiltered_tb\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;32mNone\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    149\u001b[0m     \u001b[0;32mtry\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 150\u001b[0;31m       \u001b[0;32mreturn\u001b[0m \u001b[0mfn\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    151\u001b[0m     \u001b[0;32mexcept\u001b[0m \u001b[0mException\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    152\u001b[0m       \u001b[0mfiltered_tb\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0m_process_traceback_frames\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0me\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m__traceback__\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/eager/polymorphic_function/polymorphic_function.py\u001b[0m in \u001b[0;36m__call__\u001b[0;34m(self, *args, **kwds)\u001b[0m\n\u001b[1;32m    831\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    832\u001b[0m       \u001b[0;32mwith\u001b[0m \u001b[0mOptionalXlaContext\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_jit_compile\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 833\u001b[0;31m         \u001b[0mresult\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_call\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwds\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    834\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    835\u001b[0m       \u001b[0mnew_tracing_count\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mexperimental_get_tracing_count\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/eager/polymorphic_function/polymorphic_function.py\u001b[0m in \u001b[0;36m_call\u001b[0;34m(self, *args, **kwds)\u001b[0m\n\u001b[1;32m    876\u001b[0m       \u001b[0;31m# In this case we have not created variables on the first call. So we can\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    877\u001b[0m       \u001b[0;31m# run the first trace but we should fail if variables are created.\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 878\u001b[0;31m       results = tracing_compilation.call_function(\n\u001b[0m\u001b[1;32m    879\u001b[0m           \u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mkwds\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_variable_creation_config\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    880\u001b[0m       )\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/eager/polymorphic_function/tracing_compilation.py\u001b[0m in \u001b[0;36mcall_function\u001b[0;34m(args, kwargs, tracing_options)\u001b[0m\n\u001b[1;32m    137\u001b[0m   \u001b[0mbound_args\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mfunction\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfunction_type\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mbind\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    138\u001b[0m   \u001b[0mflat_inputs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mfunction\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfunction_type\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0munpack_inputs\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mbound_args\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 139\u001b[0;31m   return function._call_flat(  # pylint: disable=protected-access\n\u001b[0m\u001b[1;32m    140\u001b[0m       \u001b[0mflat_inputs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcaptured_inputs\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mfunction\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcaptured_inputs\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    141\u001b[0m   )\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/eager/polymorphic_function/concrete_function.py\u001b[0m in \u001b[0;36m_call_flat\u001b[0;34m(self, tensor_inputs, captured_inputs)\u001b[0m\n\u001b[1;32m   1320\u001b[0m         and executing_eagerly):\n\u001b[1;32m   1321\u001b[0m       \u001b[0;31m# No tape is watching; skip to running the function.\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 1322\u001b[0;31m       \u001b[0;32mreturn\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_inference_function\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcall_preflattened\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   1323\u001b[0m     forward_backward = self._select_forward_and_backward_functions(\n\u001b[1;32m   1324\u001b[0m         \u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/eager/polymorphic_function/atomic_function.py\u001b[0m in \u001b[0;36mcall_preflattened\u001b[0;34m(self, args)\u001b[0m\n\u001b[1;32m    214\u001b[0m   \u001b[0;32mdef\u001b[0m \u001b[0mcall_preflattened\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0margs\u001b[0m\u001b[0;34m:\u001b[0m \u001b[0mSequence\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0mcore\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mTensor\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;34m->\u001b[0m \u001b[0mAny\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    215\u001b[0m     \u001b[0;34m\"\"\"Calls with flattened tensor inputs and returns the structured output.\"\"\"\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 216\u001b[0;31m     \u001b[0mflat_outputs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcall_flat\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    217\u001b[0m     \u001b[0;32mreturn\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfunction_type\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mpack_output\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mflat_outputs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    218\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/eager/polymorphic_function/atomic_function.py\u001b[0m in \u001b[0;36mcall_flat\u001b[0;34m(self, *args)\u001b[0m\n\u001b[1;32m    249\u001b[0m         \u001b[0;32mwith\u001b[0m \u001b[0mrecord\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mstop_recording\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    250\u001b[0m           \u001b[0;32mif\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_bound_context\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mexecuting_eagerly\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 251\u001b[0;31m             outputs = self._bound_context.call_function(\n\u001b[0m\u001b[1;32m    252\u001b[0m                 \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mname\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    253\u001b[0m                 \u001b[0mlist\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/eager/context.py\u001b[0m in \u001b[0;36mcall_function\u001b[0;34m(self, name, tensor_inputs, num_outputs)\u001b[0m\n\u001b[1;32m   1550\u001b[0m     \u001b[0mcancellation_context\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mcancellation\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcontext\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1551\u001b[0m     \u001b[0;32mif\u001b[0m \u001b[0mcancellation_context\u001b[0m \u001b[0;32mis\u001b[0m \u001b[0;32mNone\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 1552\u001b[0;31m       outputs = execute.execute(\n\u001b[0m\u001b[1;32m   1553\u001b[0m           \u001b[0mname\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mdecode\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"utf-8\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1554\u001b[0m           \u001b[0mnum_outputs\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mnum_outputs\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/tensorflow/python/eager/execute.py\u001b[0m in \u001b[0;36mquick_execute\u001b[0;34m(op_name, num_outputs, inputs, attrs, ctx, name)\u001b[0m\n\u001b[1;32m     51\u001b[0m   \u001b[0;32mtry\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     52\u001b[0m     \u001b[0mctx\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mensure_initialized\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 53\u001b[0;31m     tensors = pywrap_tfe.TFE_Py_Execute(ctx._handle, device_name, op_name,\n\u001b[0m\u001b[1;32m     54\u001b[0m                                         inputs, attrs, num_outputs)\n\u001b[1;32m     55\u001b[0m   \u001b[0;32mexcept\u001b[0m \u001b[0mcore\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_NotOkStatusException\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mKeyboardInterrupt\u001b[0m: "
+          ]
+        }
+      ],
+      "source": [
+        "history_ann = model_ann.fit(X_train, y_train, epochs=10, validation_split=0.1)\n",
+        "history_lenet = model_lenet.fit(X_train, y_train, epochs=10, validation_split=0.1)\n",
+        "history_complex = model_complex.fit(X_train, y_train, epochs=10, validation_split=0.1)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "In40MUmd6a0n"
+      },
+      "source": [
+        "## 5. Evaluating and Comparing Model Performance\n",
+        "Compare the performance of the models based on their accuracy on the test set."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 7,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "qshMxqn-6a0n",
+        "outputId": "895a8c58-df91-4fde-ac91-21661cdb241e"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "313/313 - 0s - 1ms/step - accuracy: 0.9773 - loss: 0.0884\n",
+            "313/313 - 2s - 5ms/step - accuracy: 0.9865 - loss: 0.0462\n",
+            "313/313 - 12s - 37ms/step - accuracy: 0.1135 - loss: 4.9590\n",
+            "ANN Test Accuracy: 0.9773\n",
+            "LeNet-5 Inspired CNN Test Accuracy: 0.9865\n",
+            "Complex CNN Test Accuracy: 0.1135\n"
+          ]
+        }
+      ],
+      "source": [
+        "test_loss_ann, test_acc_ann = model_ann.evaluate(X_test, y_test, verbose=2)\n",
+        "test_loss_lenet, test_acc_lenet = model_lenet.evaluate(X_test, y_test, verbose=2)\n",
+        "test_loss_complex, test_acc_complex = model_complex.evaluate(X_test, y_test, verbose=2)\n",
+        "\n",
+        "print(f'ANN Test Accuracy: {test_acc_ann:.4f}')\n",
+        "print(f'LeNet-5 Inspired CNN Test Accuracy: {test_acc_lenet:.4f}')\n",
+        "print(f'Complex CNN Test Accuracy: {test_acc_complex:.4f}')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Gcrlchyq6a0o"
+      },
+      "source": [
+        "## 6. Conclusion\n",
+        "Summarize findings, discuss which model performed best, and suggest potential improvements or further experiments."
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.8.5"
+    },
+    "colab": {
+      "provenance": []
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
