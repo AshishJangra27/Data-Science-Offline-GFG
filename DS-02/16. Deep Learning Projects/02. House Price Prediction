@@ -1,0 +1,289 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xEeqA67VzpHC"
+      },
+      "source": [
+        "# California Housing Price Prediction using ANN\n",
+        "\n",
+        "## Introduction\n",
+        "This notebook uses the California Housing dataset to predict house prices using a complex Artificial Neural Network (ANN) architecture. The aim is to demonstrate regression with neural networks."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zlod9BTFzpHE"
+      },
+      "source": [
+        "## 1. Data Loading and Preprocessing"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "id": "_AC62f6zzpHE"
+      },
+      "outputs": [],
+      "source": [
+        "from sklearn.datasets import fetch_california_housing\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.preprocessing import StandardScaler\n",
+        "\n",
+        "# Load data\n",
+        "housing = fetch_california_housing()\n",
+        "X, y = housing.data, housing.target\n",
+        "\n",
+        "# Split the data\n",
+        "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n",
+        "\n",
+        "# Feature scaling\n",
+        "scaler = StandardScaler()\n",
+        "X_train_scaled = scaler.fit_transform(X_train)\n",
+        "X_test_scaled = scaler.transform(X_test)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xL7o5g6AzpHF"
+      },
+      "source": [
+        "## 2. Building an ANN Model"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 3,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "YimhL023zpHF",
+        "outputId": "1fef929d-366b-4bb5-90fe-95f9bef03bb1"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.10/dist-packages/keras/src/layers/core/dense.py:87: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.\n",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)\n"
+          ]
+        }
+      ],
+      "source": [
+        "from tensorflow.keras.models import Sequential\n",
+        "from tensorflow.keras.layers import Dense, Dropout, BatchNormalization\n",
+        "\n",
+        "# Define the model\n",
+        "model = Sequential([\n",
+        "    Dense(128, activation='relu', input_shape=(X_train_scaled.shape[1],)),\n",
+        "    BatchNormalization(),\n",
+        "    Dropout(0.1),\n",
+        "    Dense(64, activation='relu'),\n",
+        "    BatchNormalization(),\n",
+        "    Dropout(0.1),\n",
+        "    Dense(32, activation='relu'),\n",
+        "    Dense(1)\n",
+        "])\n",
+        "\n",
+        "model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zlA4MN92zpHF"
+      },
+      "source": [
+        "## 3. Model Training"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "cw_hDahHzpHG",
+        "outputId": "a8e28ebd-d176-4590-ff6c-bb0f1f68ef04"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m3s\u001b[0m 3ms/step - loss: 1.2507 - mae: 0.7941 - val_loss: 0.5909 - val_mae: 0.5311\n",
+            "Epoch 2/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 2ms/step - loss: 0.5047 - mae: 0.5212 - val_loss: 0.4194 - val_mae: 0.4916\n",
+            "Epoch 3/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 3ms/step - loss: 0.4507 - mae: 0.4931 - val_loss: 0.4153 - val_mae: 0.4639\n",
+            "Epoch 4/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 2ms/step - loss: 0.4098 - mae: 0.4644 - val_loss: 0.3580 - val_mae: 0.4186\n",
+            "Epoch 5/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3863 - mae: 0.4487 - val_loss: 0.3802 - val_mae: 0.4337\n",
+            "Epoch 6/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3853 - mae: 0.4494 - val_loss: 0.3531 - val_mae: 0.4324\n",
+            "Epoch 7/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3667 - mae: 0.4355 - val_loss: 0.3536 - val_mae: 0.4132\n",
+            "Epoch 8/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3673 - mae: 0.4369 - val_loss: 0.3318 - val_mae: 0.4102\n",
+            "Epoch 9/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3434 - mae: 0.4231 - val_loss: 0.3266 - val_mae: 0.3947\n",
+            "Epoch 10/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3456 - mae: 0.4211 - val_loss: 0.3771 - val_mae: 0.4615\n",
+            "Epoch 11/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3498 - mae: 0.4179 - val_loss: 0.3340 - val_mae: 0.4125\n",
+            "Epoch 12/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3344 - mae: 0.4082 - val_loss: 0.3333 - val_mae: 0.4037\n",
+            "Epoch 13/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 3ms/step - loss: 0.3549 - mae: 0.4211 - val_loss: 0.3479 - val_mae: 0.4177\n",
+            "Epoch 14/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 3ms/step - loss: 0.3251 - mae: 0.4059 - val_loss: 0.3723 - val_mae: 0.4121\n",
+            "Epoch 15/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 3ms/step - loss: 0.3232 - mae: 0.4028 - val_loss: 0.3316 - val_mae: 0.4181\n",
+            "Epoch 16/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3330 - mae: 0.4106 - val_loss: 0.3357 - val_mae: 0.4099\n",
+            "Epoch 17/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3121 - mae: 0.3927 - val_loss: 0.3342 - val_mae: 0.4059\n",
+            "Epoch 18/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3014 - mae: 0.3862 - val_loss: 0.3407 - val_mae: 0.4038\n",
+            "Epoch 19/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3165 - mae: 0.3919 - val_loss: 0.3288 - val_mae: 0.4056\n",
+            "Epoch 20/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3223 - mae: 0.3994 - val_loss: 0.3139 - val_mae: 0.3954\n",
+            "Epoch 21/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3158 - mae: 0.3928 - val_loss: 0.3320 - val_mae: 0.4104\n",
+            "Epoch 22/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.3046 - mae: 0.3862 - val_loss: 0.3234 - val_mae: 0.3893\n",
+            "Epoch 23/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2980 - mae: 0.3810 - val_loss: 0.3198 - val_mae: 0.3834\n",
+            "Epoch 24/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 3ms/step - loss: 0.2980 - mae: 0.3827 - val_loss: 0.3336 - val_mae: 0.3992\n",
+            "Epoch 25/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 3ms/step - loss: 0.3020 - mae: 0.3843 - val_loss: 0.2988 - val_mae: 0.3696\n",
+            "Epoch 26/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 2ms/step - loss: 0.2893 - mae: 0.3767 - val_loss: 0.3584 - val_mae: 0.4197\n",
+            "Epoch 27/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2979 - mae: 0.3807 - val_loss: 0.3135 - val_mae: 0.3781\n",
+            "Epoch 28/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2977 - mae: 0.3813 - val_loss: 0.3146 - val_mae: 0.3842\n",
+            "Epoch 29/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2826 - mae: 0.3720 - val_loss: 0.3277 - val_mae: 0.4178\n",
+            "Epoch 30/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2926 - mae: 0.3801 - val_loss: 0.3168 - val_mae: 0.3885\n",
+            "Epoch 31/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2939 - mae: 0.3791 - val_loss: 0.3071 - val_mae: 0.3731\n",
+            "Epoch 32/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2831 - mae: 0.3700 - val_loss: 0.3243 - val_mae: 0.3915\n",
+            "Epoch 33/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2809 - mae: 0.3658 - val_loss: 0.3204 - val_mae: 0.3971\n",
+            "Epoch 34/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 3ms/step - loss: 0.2894 - mae: 0.3754 - val_loss: 0.3033 - val_mae: 0.3808\n",
+            "Epoch 35/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 2ms/step - loss: 0.2892 - mae: 0.3752 - val_loss: 0.3083 - val_mae: 0.3777\n",
+            "Epoch 36/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2684 - mae: 0.3615 - val_loss: 0.3193 - val_mae: 0.3984\n",
+            "Epoch 37/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2834 - mae: 0.3687 - val_loss: 0.3124 - val_mae: 0.3908\n",
+            "Epoch 38/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2755 - mae: 0.3679 - val_loss: 0.2973 - val_mae: 0.3710\n",
+            "Epoch 39/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2735 - mae: 0.3653 - val_loss: 0.3073 - val_mae: 0.3806\n",
+            "Epoch 40/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2736 - mae: 0.3667 - val_loss: 0.3070 - val_mae: 0.3766\n",
+            "Epoch 41/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2813 - mae: 0.3704 - val_loss: 0.3076 - val_mae: 0.3926\n",
+            "Epoch 42/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2823 - mae: 0.3679 - val_loss: 0.3070 - val_mae: 0.3873\n",
+            "Epoch 43/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 3ms/step - loss: 0.2773 - mae: 0.3640 - val_loss: 0.3110 - val_mae: 0.3799\n",
+            "Epoch 44/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 3ms/step - loss: 0.2773 - mae: 0.3650 - val_loss: 0.3151 - val_mae: 0.3848\n",
+            "Epoch 45/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m2s\u001b[0m 2ms/step - loss: 0.2692 - mae: 0.3644 - val_loss: 0.2974 - val_mae: 0.3728\n",
+            "Epoch 46/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2691 - mae: 0.3609 - val_loss: 0.3194 - val_mae: 0.3940\n",
+            "Epoch 47/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2647 - mae: 0.3600 - val_loss: 0.3209 - val_mae: 0.3872\n",
+            "Epoch 48/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2739 - mae: 0.3602 - val_loss: 0.3173 - val_mae: 0.3905\n",
+            "Epoch 49/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2630 - mae: 0.3558 - val_loss: 0.3170 - val_mae: 0.3923\n",
+            "Epoch 50/50\n",
+            "\u001b[1m465/465\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 2ms/step - loss: 0.2778 - mae: 0.3644 - val_loss: 0.3223 - val_mae: 0.3933\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Train the model\n",
+        "history = model.fit(X_train_scaled, y_train, epochs=50, validation_split=0.1)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "UFjRcoXmzpHG"
+      },
+      "source": [
+        "## 4. Model Evaluation"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 5,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "aroh384VzpHG",
+        "outputId": "0c54449f-ab71-4073-a262-1656c2fa420c"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[1m129/129\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 2ms/step - loss: 0.2849 - mae: 0.3748\n",
+            "Test Mean Absolute Error: 0.3765\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Evaluate the model on the test set\n",
+        "test_loss, test_mae = model.evaluate(X_test_scaled, y_test)\n",
+        "print(f'Test Mean Absolute Error: {test_mae:.4f}')"
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.8.5"
+    },
+    "colab": {
+      "provenance": []
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
