@@ -1,0 +1,530 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KNN Classifier Explorer</title>
+    <style>
+        :root {
+            --accent-color: #2f8d46;
+            --accent-light: #468d2f;
+            --border-color: #cccccc;
+            --text-color: #000000;
+            --bg-color: #ffffff;
+            --subtle-gray: #f0f0f0;
+            --highlight-outline: #ff8c00;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            font-family: monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            height: 8vh;
+            display: flex;
+            align-items: center;
+            padding: 0 2vw;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        header img {
+            height: 32px;
+            margin-right: 15px;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: normal;
+            margin: 0;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            min-height: 0; /* Fix for flex item overflow */
+        }
+
+        #control-panel {
+            width: 30vw;
+            padding: 2vh 2vw;
+            box-sizing: border-box;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 2vh;
+            overflow-y: auto;
+        }
+
+        #visualization-panel {
+            width: 70vw;
+            position: relative;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5vh;
+        }
+
+        label, .display-label {
+            font-weight: bold;
+        }
+
+        .display-value {
+            display: inline-block;
+            padding: 0.5em;
+            background-color: var(--subtle-gray);
+            border-radius: 4px;
+            min-height: 1.2em;
+        }
+        
+        #k-value {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        
+        input[type="range"], select, button {
+            width: 100%;
+            padding: 0.5em;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            font-family: monospace;
+        }
+
+        input[type="range"] {
+            accent-color: var(--accent-color);
+            padding: 0;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1vw;
+            margin-top: auto; /* Pushes buttons to the bottom */
+            padding-top: 2vh;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: var(--subtle-gray);
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #e0e0e0;
+        }
+
+        button.primary {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        button.primary:hover {
+            background-color: var(--accent-light);
+        }
+
+        #explanation-text {
+            font-size: 0.9em;
+            min-height: 2.2em; /* Reserve space for 2 lines */
+            line-height: 1.2em;
+            color: #555;
+            background: var(--subtle-gray);
+            padding: 0.8em;
+            border-radius: 4px;
+        }
+        
+        footer {
+            height: 5vh;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 2vw;
+            flex-shrink: 0;
+            gap: 1.5vw;
+        }
+
+        footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: text-decoration 0.2s;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://media.geeksforgeeks.org/gfg-gg-logo.svg" alt="GeeksforGeeks Logo">
+        <h1>KNN Classifier Explorer</h1>
+    </header>
+
+    <main>
+        <div id="control-panel">
+            <div class="control-group">
+                <label for="k-slider">Adjust k: <span id="k-value">3</span></label>
+                <input type="range" id="k-slider" min="1" max="15" value="3">
+            </div>
+
+            <div class="control-group">
+                <label for="distance-metric">Distance Metric:</label>
+                <select id="distance-metric">
+                    <option value="euclidean">Euclidean</option>
+                    <option value="manhattan">Manhattan</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <span class="display-label">Predicted Category:</span>
+                <div id="predicted-category" class="display-value"></div>
+            </div>
+            
+            <div class="control-group">
+                <span class="display-label">Explanation:</span>
+                <p id="explanation-text"></p>
+            </div>
+            
+            <div class="button-group">
+                <button id="reset-btn">Reset</button>
+                <button id="randomize-btn">Randomize</button>
+                <button id="next-step-btn">Next Step</button>
+                <button id="autorun-btn" class="primary">Auto-Run</button>
+            </div>
+        </div>
+        <div id="visualization-panel">
+            <canvas id="canvas"></canvas>
+        </div>
+    </main>
+    
+    <footer>
+        <a href="https://github.com/AshishJangra27/" target="_blank">GitHub</a>
+        <a href="https://www.linkedin.com/in/ashish-jangra/" target="_blank">LinkedIn</a>
+    </footer>
+
+    <script>
+    (function() {
+        // DOM Elements
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const kSlider = document.getElementById('k-slider');
+        const kValueSpan = document.getElementById('k-value');
+        const metricSelect = document.getElementById('distance-metric');
+        const predictedCategorySpan = document.getElementById('predicted-category');
+        const explanationText = document.getElementById('explanation-text');
+        const resetBtn = document.getElementById('reset-btn');
+        const randomizeBtn = document.getElementById('randomize-btn');
+        const nextStepBtn = document.getElementById('next-step-btn');
+        const autorunBtn = document.getElementById('autorun-btn');
+
+        // State
+        let dataPoints = [];
+        let testPoint = { x: 0, y: 0 };
+        let k = 3;
+        let distanceMetric = 'euclidean';
+        let neighbors = [];
+        let prediction = '';
+        let isDragging = false;
+        let demoState = 'idle'; // idle, finding, counting, predicted
+        let autoRunInterval = null;
+        
+        const TOTAL_POINTS = 50;
+        const CATEGORIES = [
+            { name: 'A', color: '#2f8d46' }, // GfG Green
+            { name: 'B', color: '#4682b4' }  // Steel Blue
+        ];
+
+        // --- Core Logic ---
+
+        function euclideanDistance(p1, p2) {
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+        }
+
+        function manhattanDistance(p1, p2) {
+            return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+        }
+
+        function calculateKNN() {
+            const distanceFn = distanceMetric === 'manhattan' ? manhattanDistance : euclideanDistance;
+
+            const distances = dataPoints.map(point => ({
+                point: point,
+                distance: distanceFn(testPoint, point)
+            }));
+
+            distances.sort((a, b) => a.distance - b.distance);
+            
+            neighbors = distances.slice(0, k).map(d => d.point);
+
+            if (neighbors.length === 0) {
+                prediction = 'N/A';
+                return;
+            }
+
+            const categoryCounts = neighbors.reduce((acc, neighbor) => {
+                acc[neighbor.category.name] = (acc[neighbor.category.name] || 0) + 1;
+                return acc;
+            }, {});
+
+            prediction = Object.keys(categoryCounts).reduce((a, b) => 
+                categoryCounts[a] > categoryCounts[b] ? a : b
+            );
+        }
+        
+        // --- Drawing ---
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw data points
+            dataPoints.forEach(point => {
+                const isNeighbor = neighbors.includes(point);
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, isNeighbor ? 8 : 5, 0, 2 * Math.PI);
+                ctx.fillStyle = point.category.color;
+                ctx.fill();
+                if (isNeighbor) {
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+
+            // Draw lines to neighbors
+            if (demoState !== 'idle' || neighbors.length > 0) {
+                neighbors.forEach(neighbor => {
+                    ctx.beginPath();
+                    ctx.moveTo(testPoint.x, testPoint.y);
+                    ctx.lineTo(neighbor.x, neighbor.y);
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+            }
+
+            // Draw test point
+            ctx.beginPath();
+            ctx.rect(testPoint.x - 7, testPoint.y - 7, 14, 14);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+        
+        // --- UI Updates ---
+        
+        function updateUI() {
+            kValueSpan.textContent = k;
+            predictedCategorySpan.textContent = prediction;
+            
+            // Default explanation text
+            if (demoState === 'idle') {
+                explanationText.textContent = `k set to ${k}, using ${distanceMetric} distance. Drag the square point to explore.`;
+            }
+        }
+        
+        function updateAll() {
+            calculateKNN();
+            updateUI();
+            draw();
+        }
+
+        // --- Data Generation ---
+
+        function generateData() {
+            dataPoints = [];
+            for (let i = 0; i < TOTAL_POINTS; i++) {
+                dataPoints.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    category: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)]
+                });
+            }
+            
+            testPoint = {
+                x: canvas.width / 2,
+                y: canvas.height / 2
+            };
+
+            kSlider.max = Math.min(15, Math.floor(TOTAL_POINTS / 2));
+        }
+
+        // --- Demo Flow ---
+
+        function runDemoStep() {
+            switch (demoState) {
+                case 'idle':
+                    demoState = 'finding';
+                    neighbors = []; // Clear previous neighbors for visual effect
+                    draw();
+                    explanationText.textContent = `1. Finding the ${k} nearest neighbors using ${distanceMetric} distance...`;
+                    break;
+
+                case 'finding':
+                    demoState = 'counting';
+                    calculateKNN(); // This calculates and sets the neighbors
+                    draw(); // Redraw to show neighbors
+                    
+                    const counts = neighbors.reduce((acc, n) => {
+                        acc[n.category.name] = (acc[n.category.name] || 0) + 1;
+                        return acc;
+                    }, {});
+                    const countStr = Object.entries(counts).map(([cat, num]) => `${num} of Category ${cat}`).join(', ');
+                    explanationText.textContent = `2. Counting categories among neighbors: ${countStr}.`;
+                    break;
+                
+                case 'counting':
+                    demoState = 'predicted';
+                    explanationText.textContent = `3. The most frequent category is ${prediction}. Prediction: ${prediction}.`;
+                    break;
+
+                case 'predicted':
+                    demoState = 'idle';
+                    explanationText.textContent = 'Demo complete. Interact with controls or run again.';
+                    if (autoRunInterval) { // Loop auto-run
+                        stopAutoRun();
+                        setTimeout(startAutoRun, 1500);
+                    }
+                    break;
+            }
+        }
+        
+        function startAutoRun() {
+            if (autoRunInterval) return;
+            autorunBtn.textContent = 'Stop';
+            demoState = 'idle';
+            generateData();
+            updateAll();
+            autoRunInterval = setInterval(runDemoStep, 2000);
+            runDemoStep(); // Start immediately
+        }
+
+        function stopAutoRun() {
+            clearInterval(autoRunInterval);
+            autoRunInterval = null;
+            autorunBtn.textContent = 'Auto-Run';
+            demoState = 'idle';
+        }
+
+        // --- Initialization and Event Listeners ---
+
+        function init() {
+            const container = document.getElementById('visualization-panel');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            stopAutoRun();
+            demoState = 'idle';
+            
+            k = parseInt(kSlider.value);
+            distanceMetric = metricSelect.value;
+            
+            generateData();
+            updateAll();
+        }
+        
+        window.addEventListener('resize', init);
+        
+        kSlider.addEventListener('input', (e) => {
+            k = parseInt(e.target.value);
+            demoState = 'idle';
+            stopAutoRun();
+            updateAll();
+        });
+
+        metricSelect.addEventListener('change', (e) => {
+            distanceMetric = e.target.value;
+            demoState = 'idle';
+            stopAutoRun();
+            updateAll();
+        });
+        
+        resetBtn.addEventListener('click', init);
+
+        randomizeBtn.addEventListener('click', () => {
+            stopAutoRun();
+            demoState = 'idle';
+            generateData();
+            updateAll();
+        });
+        
+        nextStepBtn.addEventListener('click', () => {
+            stopAutoRun();
+            runDemoStep();
+        });
+        
+        autorunBtn.addEventListener('click', () => {
+            if (autoRunInterval) {
+                stopAutoRun();
+                updateAll(); // Reset explanation text
+            } else {
+                startAutoRun();
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const dist = Math.sqrt(Math.pow(mouseX - testPoint.x, 2) + Math.pow(mouseY - testPoint.y, 2));
+            if (dist < 15) {
+                isDragging = true;
+                stopAutoRun();
+                demoState = 'idle';
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const rect = canvas.getBoundingClientRect();
+                testPoint.x = e.clientX - rect.left;
+                testPoint.y = e.clientY - rect.top;
+                
+                // Clamp to canvas bounds
+                testPoint.x = Math.max(0, Math.min(canvas.width, testPoint.x));
+                testPoint.y = Math.max(0, Math.min(canvas.height, testPoint.y));
+                
+                updateAll();
+            }
+        });
+
+        // Start the application
+        init();
+
+    })();
+    </script>
+</body>
+</html>
