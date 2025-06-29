@@ -1,2 +1,3 @@
 https://www.kaggle.com/datasets/datamunge/sign-language-mnist
 https://www.kaggle.com/competitions/new-york-city-taxi-fare-prediction/data
+https://medium.com/@snehabajaj108/machine-learning-project-predicting-taxi-fares-in-nyc-b4fc401dc43a#b8b0
