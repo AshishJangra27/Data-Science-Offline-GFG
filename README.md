@@ -7,3 +7,6 @@ https://colab.research.google.com/drive/1VhD7fKBQM91sEyeRTNcQIfp1J-eWGRNg?usp=sh
 
 Dimentionality Reduction
 https://colab.research.google.com/drive/1C2_upkzNC--sugiqGtEpsu-CpaaTDs7B?usp=sharing
+
+Linear Regression with BruteForce
+https://colab.research.google.com/drive/13erUGbV44FOIkFbfGTLfQ77F5aYGge8j?usp=sharing
