@@ -10,3 +10,7 @@ https://colab.research.google.com/drive/1C2_upkzNC--sugiqGtEpsu-CpaaTDs7B?usp=sh
 
 Linear Regression with BruteForce
 https://colab.research.google.com/drive/13erUGbV44FOIkFbfGTLfQ77F5aYGge8j?usp=sharing
+
+
+Decision Tree Classifier from Scratch
+https://colab.research.google.com/drive/1juVuCNDJLY_SBCsMyBs9iSfmFGpPWBnu?usp=sharing
