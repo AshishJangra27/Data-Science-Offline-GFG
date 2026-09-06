@@ -14,3 +14,10 @@ https://colab.research.google.com/drive/13erUGbV44FOIkFbfGTLfQ77F5aYGge8j?usp=sh
 
 Decision Tree Classifier from Scratch
 https://colab.research.google.com/drive/1juVuCNDJLY_SBCsMyBs9iSfmFGpPWBnu?usp=sharing
+
+Clustering
+https://colab.research.google.com/drive/1ql_PVGFPQyZ6pP0ym3t6xhpOvpSha5AR?usp=sharing
+
+AutoML
+https://colab.research.google.com/drive/1DAG-IjKr8GVwisGZU2sLXsLAX3GtKLwx?usp=sharing
+
