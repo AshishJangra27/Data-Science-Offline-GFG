@@ -21,3 +21,5 @@ https://colab.research.google.com/drive/1ql_PVGFPQyZ6pP0ym3t6xhpOvpSha5AR?usp=sh
 AutoML
 https://colab.research.google.com/drive/1DAG-IjKr8GVwisGZU2sLXsLAX3GtKLwx?usp=sharing
 
+NLP Classifier
+https://colab.research.google.com/drive/1v2vqJTfNBEusc8Qtl4knw2_yQwIfbc7n?usp=sharing
